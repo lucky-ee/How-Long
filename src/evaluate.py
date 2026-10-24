@@ -5,7 +5,7 @@ import pandas as pd
 from sksurv.metrics import (concordance_index_censored, concordance_index_ipcw,
                             cumulative_dynamic_auc, integrated_brier_score)
 
-from howlong.survival import surv_y
+from src.survival import surv_y
 
 AUC_HOURS = (24.0, 72.0, 168.0)
 

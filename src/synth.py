@@ -5,7 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from howlong import config
+from src import config
 
 CATEGORIES = {
     "street and sidewalk cleaning": (["bulky items", "general cleaning", "human or animal waste"], 30.0, 1.3),
@@ -46,7 +46,7 @@ def generate(
     as_of: str = "2026-10-23 20:00",
     duplicate_rate: float = 0.03,
 ) -> pd.DataFrame:
-    """Rows shaped exactly like the output of `howlong.clean.clean`."""
+    """Rows shaped exactly like the output of `src.clean.clean`."""
     rng = np.random.default_rng(seed)
     t0, t_end = pd.Timestamp(start), pd.Timestamp(as_of)
     span_h = (t_end - t0).total_seconds() / 3600

@@ -12,7 +12,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from sf311 import config
+from src import config
 
 
 def month_starts(since: date, until: date) -> list[date]:

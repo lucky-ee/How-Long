@@ -5,7 +5,7 @@ import re
 
 import pandas as pd
 
-from sf311 import config
+from src import config
 
 KEEP = [
     "case_id", "opened", "closed", "event", "duration_hours",
@@ -96,7 +96,7 @@ def clean(raw: pd.DataFrame, as_of: pd.Timestamp) -> tuple[pd.DataFrame, dict]:
 def main() -> None:
     files = sorted(config.RAW_DIR.glob("*.parquet"))
     if not files:
-        raise SystemExit("No raw data found. Run `python -m sf311.ingest` first.")
+        raise SystemExit("No raw data found. Run `python -m src.ingest` first.")
     manifest = json.loads(config.MANIFEST.read_text())
     as_of = pd.Timestamp(manifest["fetched_at"])
 

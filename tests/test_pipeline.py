@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sf311 import config
-from sf311.backlog import add_backlog
-from sf311.clean import clean
-from sf311.ingest import month_starts
+from src import config
+from src.backlog import add_backlog
+from src.clean import clean
+from src.ingest import month_starts
 
 AS_OF = pd.Timestamp("2026-10-23 20:00")
 
