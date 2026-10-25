@@ -34,7 +34,6 @@ def clean(raw: pd.DataFrame, as_of: pd.Timestamp) -> tuple[pd.DataFrame, dict]:
     for col in ["lat", "long", "supervisor_district"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-
     df["source"] = normalize_label(df["source"]).replace(config.SOURCE_ALIASES)
     test_rows = df["source"].isin(config.DROP_SOURCES)
     report["dropped_test_source"] = int(test_rows.sum())
@@ -76,7 +75,7 @@ def clean(raw: pd.DataFrame, as_of: pd.Timestamp) -> tuple[pd.DataFrame, dict]:
     df["agency"] = normalize_label(df["agency_responsible"])
 
     df["has_photo"] = df["media_url"].notna() & df["media_url"].ne("")
-    
+
     df["is_duplicate"] = df["status_notes"].str.contains("duplicate", case=False, na=False)
     report["duplicate_cases"] = int(df["is_duplicate"].sum())
 

@@ -84,7 +84,6 @@ def generate(
     end = np.where(event == 1, closed, t_end)
     duration = (pd.DatetimeIndex(end) - opened).total_seconds() / 3600
 
-    names = {d: DISTRICTS[d][0] for d in DISTRICTS}
     lat = np.array([DISTRICTS[d][1] for d in district]) + rng.normal(0, 0.006, n)
     lon = np.array([DISTRICTS[d][2] for d in district]) + rng.normal(0, 0.006, n)
 
@@ -100,7 +99,7 @@ def generate(
         "source": source,
         "agency": "synthetic agency",
         "supervisor_district": district.astype(float),
-        "neighborhood": [names[d] for d in district],
+        "neighborhood": [DISTRICTS[d][0] for d in district],
         "lat": lat,
         "lon": lon,
         "address": pd.NA,

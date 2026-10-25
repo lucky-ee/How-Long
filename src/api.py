@@ -115,10 +115,10 @@ def create_app(artifact_dir: Path = ARTIFACT_DIR, frontend_dir: Optional[Path] =
     @api.get("/health")
     def health():
         try:
-            artifacts.get()
+            loaded = artifacts.get()
         except HTTPException as err:
             return {"ok": False, "detail": err.detail}
-        return {"ok": True, "deployed": artifacts.get()["report"].get("deployed", {}).get("name")}
+        return {"ok": True, "deployed": loaded["report"].get("deployed", {}).get("name")}
 
     @api.get("/options")
     def options():

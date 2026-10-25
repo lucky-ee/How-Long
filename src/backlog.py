@@ -4,7 +4,6 @@ import duckdb
 import pandas as pd
 
 
-
 BACKLOG_SQL = """
 WITH events AS (
     SELECT request_type, supervisor_district, opened AS t, 1 AS delta FROM cases

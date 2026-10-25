@@ -199,9 +199,8 @@ def run(cases: pd.DataFrame, as_of: pd.Timestamp, s: Settings, out_dir=config.AR
     for h in confirm["hypotheses"]:
         log(f"{h['id']} p_holm={h['p_holm']:.3g} supported={h['supported']}")
 
-    all_data = df.copy()
-    serving = fit_tuned(cands[deployed_name][1], final_params[deployed_name], all_data)
-    serving_km = KMBaseline().fit(all_data)
+    serving = fit_tuned(cands[deployed_name][1], final_params[deployed_name], df)
+    serving_km = KMBaseline().fit(df)
 
     linear = fitted["linear"]
     coefs = linear.coef_table().assign(hazard_ratio=lambda d: np.exp(d["coef"]))
