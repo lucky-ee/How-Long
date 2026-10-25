@@ -84,8 +84,10 @@ def generate(
     end = np.where(event == 1, closed, t_end)
     duration = (pd.DatetimeIndex(end) - opened).total_seconds() / 3600
 
-    lat = np.array([DISTRICTS[d][1] for d in district]) + rng.normal(0, 0.006, n)
-    lon = np.array([DISTRICTS[d][2] for d in district]) + rng.normal(0, 0.006, n)
+    # one lookup per row so neighborhood, lat and lon always come from the same district entry
+    geo = pd.DataFrame.from_dict(DISTRICTS, orient="index", columns=["neighborhood", "lat", "lon"]).loc[district]
+    lat = geo["lat"].to_numpy() + rng.normal(0, 0.006, n)
+    lon = geo["lon"].to_numpy() + rng.normal(0, 0.006, n)
 
     df = pd.DataFrame({
         "case_id": [f"S{i:07d}" for i in range(n)],
@@ -99,7 +101,7 @@ def generate(
         "source": source,
         "agency": "synthetic agency",
         "supervisor_district": district.astype(float),
-        "neighborhood": [DISTRICTS[d][0] for d in district],
+        "neighborhood": geo["neighborhood"].to_numpy(),
         "lat": lat,
         "lon": lon,
         "address": pd.NA,
