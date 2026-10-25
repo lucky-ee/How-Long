@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Long? · SF 311 wait times</title>
+  <meta name="description" content="Estimate how long a San Francisco 311 request will take to close, based on how similar cases actually closed.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%235f8b7e'/%3E%3Cpath d='M16 8v8l5 3' stroke='%23fbf9f5' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    try {
+      const t = localStorage.getItem("howlong-theme");
+      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    } catch { /* storage blocked: follow the system theme */ }
+  </script>
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="topbar">
+    <a class="brand" href="./">How Long<span>?</span></a>
+    <nav class="nav">
+      <a href="#estimate">Estimate</a>
+      <a href="#insights">What matters</a>
+    </nav>
+    <span class="mode-badge" id="mode-badge" hidden title="No prediction API is connected. Numbers come from the synthetic data generator in src/synth.py."></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch light or dark theme">
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">San Francisco 311</p>
+      <h1>How long until someone <em>fixes it?</em></h1>
+      <p class="lede">Describe your request and see how long similar cases have actually taken to close.</p>
+    </section>
+
+    <section class="estimate" id="estimate">
+      <form class="card form" id="form" autocomplete="off" onsubmit="return false">
+        <div class="field">
+          <label for="type-input">What's the issue?</label>
+          <div class="combo">
+            <svg class="combo-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            <input id="type-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                   aria-controls="type-list" placeholder="Search: graffiti, streetlight, bulky items…" spellcheck="false">
+            <ul class="combo-list" id="type-list" role="listbox" hidden></ul>
+          </div>
+          <div class="chips" id="quick-picks" aria-label="Common requests"></div>
+        </div>
+
+        <div class="field">
+          <label for="district">Where is it?</label>
+          <div class="select">
+            <select id="district"></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label" id="source-label">How are you reporting it?</span>
+          <div class="segmented" id="source" role="radiogroup" aria-labelledby="source-label"></div>
+        </div>
+
+        <div class="field split">
+          <label class="switch" for="photo">
+            <input type="checkbox" id="photo">
+            <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+            <span>Attaching a photo</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label for="when">When are you filing?</label>
+          <div class="when">
+            <input type="datetime-local" id="when">
+            <button type="button" class="chip" id="now">Now</button>
+          </div>
+        </div>
+      </form>
+
+      <section class="card result" id="result" aria-live="polite">
+        <div class="result-head">
+          <p class="result-label">Typical wait <span class="dot" aria-hidden="true"></span></p>
+          <button type="button" class="ghost-btn" id="share" aria-label="Copy a link to this estimate">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
+            <span>Share</span>
+          </button>
+        </div>
+        <p class="big" id="median"><span class="num">–</span></p>
+        <p class="range" id="range">&nbsp;</p>
+
+        <div class="chart-wrap">
+          <p class="chart-title">Chance it's closed, over time <span>hover to explore</span></p>
+          <div class="chart" id="chart"></div>
+        </div>
+
+        <ul class="milestones" id="milestones"></ul>
+        <p class="footnote" id="footnote"></p>
+      </section>
+    </section>
+
+    <section class="insights" id="insights">
+      <div class="section-head reveal">
+        <p class="eyebrow">Under the hood</p>
+        <h2>What makes a request close faster</h2>
+        <p class="lede small">Each effect is the change in closing speed with everything else held equal.</p>
+      </div>
+
+      <p class="note reveal" id="demo-note" hidden>
+        You're seeing <strong>demo data</strong>. These are the effects deliberately planted in
+        <code>src/synth.py</code>, so a well-fitted model should recover them. Connect the API in
+        <code>config.js</code> to show the trained model's results.
+      </p>
+
+      <div class="stats reveal" id="stats"></div>
+
+      <div class="grid-2">
+        <div class="card panel reveal">
+          <h3>Strongest effects</h3>
+          <ul class="effects" id="effects"></ul>
+        </div>
+        <div class="card panel reveal" id="hoods-card">
+          <h3>Neighborhoods</h3>
+          <p class="panel-sub">Closing speed vs. what its mix of requests would predict.</p>
+          <ul class="effects" id="hoods"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built on <a href="https://data.sfgov.org/d/vw6y-z8j6" rel="noopener">DataSF 311 Cases</a>.
+      Estimates are statistical, not a promise from the City.</p>
+  </footer>
+</body>
+</html>

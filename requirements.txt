@@ -1,0 +1,16 @@
+# Pinned: model.joblib is a pickle, so serving needs the same versions that trained it.
+duckdb==2.0.0
+fastapi==0.162.0
+joblib==1.6.0
+lifelines==0.30.0
+numpy==2.5.4
+pandas==3.1.0
+pyarrow==26.0.0
+pydantic==2.14.1
+requests==2.34.2
+scikit-learn==1.9.1
+scikit-survival==0.28.0
+scipy==1.18.1
+statsmodels==0.15.0
+uvicorn[standard]==0.54.0
+xgboost==3.4.1

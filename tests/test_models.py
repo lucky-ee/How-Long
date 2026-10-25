@@ -7,13 +7,13 @@ from lifelines.statistics import multivariate_logrank_test
 from sksurv.linear_model import CoxnetSurvivalAnalysis
 from sksurv.util import Surv
 
-from howlong.confirm import corrected_resampled_ttest, stratified_logrank
-from howlong.diagnostics import ph_check
-from howlong.evaluate import evaluate
-from howlong.fista_cox import FistaCox, _prepare, neg_loglik, neg_loglik_and_grad_eta, prox_group
-from howlong.models import CoxnetModel, FistaModel, KMBaseline, XGBoostAFT
-from howlong.survival import censor_at, forward_splits
-from howlong.synth import generate
+from src.confirm import corrected_resampled_ttest, stratified_logrank
+from src.diagnostics import ph_check
+from src.evaluate import evaluate
+from src.fista_cox import FistaCox, _prepare, neg_loglik, neg_loglik_and_grad_eta, prox_group
+from src.models import CoxnetModel, FistaModel, KMBaseline, XGBoostAFT
+from src.survival import censor_at, forward_splits
+from src.synth import generate
 
 warnings.filterwarnings("ignore")
 

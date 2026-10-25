@@ -12,14 +12,14 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from howlong import config
-from howlong.backlog import add_backlog
-from howlong.confirm import corrected_resampled_ttest, run_confirmatory
-from howlong.diagnostics import ph_check
-from howlong.evaluate import evaluate
-from howlong.models import CoxnetModel, FistaModel, KMBaseline, XGBoostAFT, _step_eval
-from howlong.survival import censor_at, forward_splits
-from howlong.tuning import tune_grid, tune_path
+from src import config
+from src.backlog import add_backlog
+from src.confirm import corrected_resampled_ttest, run_confirmatory
+from src.diagnostics import ph_check
+from src.evaluate import evaluate
+from src.models import CoxnetModel, FistaModel, KMBaseline, XGBoostAFT, _step_eval
+from src.survival import censor_at, forward_splits
+from src.tuning import tune_grid, tune_path
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 

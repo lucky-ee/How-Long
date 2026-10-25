@@ -6,9 +6,9 @@ import xgboost as xgb
 from scipy.stats import norm
 from sksurv.linear_model import CoxnetSurvivalAnalysis
 
-from howlong.features import feature_groups, feature_names, group_labels, make_preprocessor
-from howlong.fista_cox import FistaCox, neg_loglik_and_grad_eta, _prepare
-from howlong.survival import subsample, surv_y
+from src.features import feature_groups, feature_names, group_labels, make_preprocessor
+from src.fista_cox import FistaCox, neg_loglik_and_grad_eta, _prepare
+from src.survival import subsample, surv_y
 
 RISK_HORIZON_H = 72.0
 MEDIAN_GRID = np.geomspace(0.05, 24 * 365 * 2, 400)

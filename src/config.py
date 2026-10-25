@@ -1,10 +1,12 @@
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 CLEAN_DIR = DATA_DIR / "clean"
 MANIFEST = RAW_DIR / "_manifest.json"
+ARTIFACT_DIR = DATA_DIR / "artifacts"
+RUNS_DB = ARTIFACT_DIR / "runs.db"
 
 # DataSF 311 Cases dataset (https://data.sfgov.org/d/vw6y-z8j6)
 SODA_BASE = "https://data.sfgov.org"
