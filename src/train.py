@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sqlite3
+import tempfile
 import time
 import uuid
 import warnings
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -138,6 +141,23 @@ def json_safe(obj):
     return obj
 
 
+def atomic_write(path: Path, write) -> None:
+    """Calls write(tmp) on a temp file beside `path`, then swaps it in, so the API (which reloads
+    whenever these files change) never reads a half-written one."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    os.close(fd)
+    tmp = Path(tmp)
+    try:
+        write(tmp)
+        umask = os.umask(0)
+        os.umask(umask)
+        os.chmod(tmp, 0o666 & ~umask)  # mkstemp makes it owner-only; match a normal write
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
 def save_run(report: dict) -> None:
     con = sqlite3.connect(config.RUNS_DB)
     con.execute("""CREATE TABLE IF NOT EXISTS runs (
@@ -230,9 +250,12 @@ def run(cases: pd.DataFrame, as_of: pd.Timestamp, s: Settings, out_dir=config.AR
     report = json_safe(report)
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    joblib.dump({"model": serving, "baseline": serving_km, "deployed": deployed_name}, out_dir / "model.joblib")
-    (out_dir / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False))
-    (out_dir / "options.json").write_text(json.dumps(serving_options(df, as_of), indent=2))
+    report_text = json.dumps(report, indent=2, allow_nan=False)
+    options_text = json.dumps(serving_options(df, as_of), indent=2)
+    bundle = {"model": serving, "baseline": serving_km, "deployed": deployed_name}
+    atomic_write(out_dir / "model.joblib", lambda tmp: joblib.dump(bundle, tmp))
+    atomic_write(out_dir / "report.json", lambda tmp: tmp.write_text(report_text))
+    atomic_write(out_dir / "options.json", lambda tmp: tmp.write_text(options_text))
     if out_dir == config.ARTIFACT_DIR:
         save_run(report)
     log(f"done in {report['seconds']}s; artifacts in {out_dir}")
