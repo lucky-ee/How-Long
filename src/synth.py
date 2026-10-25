@@ -84,7 +84,7 @@ def generate(
     end = np.where(event == 1, closed, t_end)
     duration = (pd.DatetimeIndex(end) - opened).total_seconds() / 3600
 
-    # one lookup per row so neighborhood, lat and lon always come from the same district entry
+    # DISTRICTS as a table indexed by district number, so one .loc gives every row its neighborhood, lat and lon
     geo = pd.DataFrame.from_dict(DISTRICTS, orient="index", columns=["neighborhood", "lat", "lon"]).loc[district]
     lat = geo["lat"].to_numpy() + rng.normal(0, 0.006, n)
     lon = geo["lon"].to_numpy() + rng.normal(0, 0.006, n)
