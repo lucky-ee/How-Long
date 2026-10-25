@@ -97,3 +97,15 @@ def test_serves_frontend_pointed_at_this_api(artifact_dir):
     assert "/api" in c.get("/config.js").text
     assert "How Long" in c.get("/").text
     assert c.get("/api/health").json() == {"ok": True, "deployed": "linear"}
+
+
+def test_reloads_artifacts_after_retrain(artifact_dir, tmp_path):
+    for f in ("model.joblib", "report.json", "options.json"):
+        (tmp_path / f).write_bytes((artifact_dir / f).read_bytes())
+    c = TestClient(create_app(tmp_path, frontend_dir=None))
+    assert c.get("/api/health").json()["deployed"] == "linear"
+
+    report = json.loads((tmp_path / "report.json").read_text())
+    report["deployed"] = {"name": "gbm"}
+    (tmp_path / "report.json").write_text(json.dumps(report))
+    assert c.get("/api/health").json()["deployed"] == "gbm"

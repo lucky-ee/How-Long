@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -58,30 +59,49 @@ class Prediction(BaseModel):
 
 
 class Artifacts:
-    """Loads the training outputs once, on first use, so the app starts even before training."""
+    """Loads the training outputs on first use, so the app starts even before training, and
+    reloads them whenever a retrain rewrites any of the files."""
 
     FILES = ("model.joblib", "report.json", "options.json")
 
     def __init__(self, directory: Path):
         self.directory = Path(directory)
         self._cache: Optional[dict] = None
+        self._stamp: Optional[tuple] = None
+        self._lock = threading.Lock()
+
+    def _current_stamp(self) -> tuple:
+        missing = [f for f in self.FILES if not (self.directory / f).exists()]
+        if missing:
+            raise HTTPException(503, f"No trained model yet (missing {', '.join(missing)}). "
+                                     "Run `python -m src.train` first.")
+        stats = [(self.directory / f).stat() for f in self.FILES]
+        return tuple((st.st_mtime_ns, st.st_size) for st in stats)
+
+    def _load(self) -> dict:
+        bundle = joblib.load(self.directory / "model.joblib")
+        report = json.loads((self.directory / "report.json").read_text())
+        summary = {k: report[k] for k in REPORT_KEYS if k in report}
+        summary["linear_model"] = {"coefficients": report.get("linear_model", {}).get("coefficients", [])}
+        return {
+            "model": bundle["model"],
+            "report": summary,
+            "options": json.loads((self.directory / "options.json").read_text()),
+        }
 
     def get(self) -> dict:
-        if self._cache is None:
-            missing = [f for f in self.FILES if not (self.directory / f).exists()]
-            if missing:
-                raise HTTPException(503, f"No trained model yet (missing {', '.join(missing)}). "
-                                         "Run `python -m src.train` first.")
-            bundle = joblib.load(self.directory / "model.joblib")
-            report = json.loads((self.directory / "report.json").read_text())
-            summary = {k: report[k] for k in REPORT_KEYS if k in report}
-            summary["linear_model"] = {"coefficients": report.get("linear_model", {}).get("coefficients", [])}
-            self._cache = {
-                "model": bundle["model"],
-                "report": summary,
-                "options": json.loads((self.directory / "options.json").read_text()),
-            }
-        return self._cache
+        with self._lock:
+            stamp = self._current_stamp()
+            if stamp != self._stamp:
+                try:
+                    self._cache = self._load()
+                except Exception:
+                    # a retrain may be mid-write; keep serving the old model and retry next request
+                    if self._cache is None:
+                        raise
+                else:
+                    self._stamp = stamp
+            return self._cache
 
 
 def to_frame(case: Case) -> pd.DataFrame:
