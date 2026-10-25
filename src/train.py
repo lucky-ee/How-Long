@@ -220,7 +220,6 @@ def run(cases: pd.DataFrame, as_of: pd.Timestamp, s: Settings, out_dir=config.AR
         log(f"{h['id']} p_holm={h['p_holm']:.3g} supported={h['supported']}")
 
     serving = fit_tuned(cands[deployed_name][1], final_params[deployed_name], df)
-    serving_km = KMBaseline().fit(df)
 
     linear = fitted["linear"]
     coefs = linear.coef_table().assign(hazard_ratio=lambda d: np.exp(d["coef"]))
@@ -252,7 +251,7 @@ def run(cases: pd.DataFrame, as_of: pd.Timestamp, s: Settings, out_dir=config.AR
     out_dir.mkdir(parents=True, exist_ok=True)
     report_text = json.dumps(report, indent=2, allow_nan=False)
     options_text = json.dumps(serving_options(df, as_of), indent=2)
-    bundle = {"model": serving, "baseline": serving_km, "deployed": deployed_name}
+    bundle = {"model": serving, "deployed": deployed_name}
     atomic_write(out_dir / "model.joblib", lambda tmp: joblib.dump(bundle, tmp))
     atomic_write(out_dir / "report.json", lambda tmp: tmp.write_text(report_text))
     atomic_write(out_dir / "options.json", lambda tmp: tmp.write_text(options_text))

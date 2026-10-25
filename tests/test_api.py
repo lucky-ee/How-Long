@@ -31,7 +31,7 @@ def artifact_dir(tmp_path_factory):
     df = df[~df["is_duplicate"]].reset_index(drop=True)
     model = FistaModel(0.5, strata_col="category", n_alphas=5).fit(df)
     model.set_alpha(min(model.alphas_))           # weakest penalty, so planted effects survive
-    joblib.dump({"model": model, "baseline": None, "deployed": "linear"}, out / "model.joblib")
+    joblib.dump({"model": model, "deployed": "linear"}, out / "model.joblib")
     (out / "report.json").write_text(json.dumps({
         "deployed": {"name": "linear"},
         "holdout": {"linear": {"c_index": 0.7}},
