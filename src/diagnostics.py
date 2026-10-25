@@ -8,8 +8,6 @@ from lifelines import CoxPHFitter
 from lifelines.statistics import proportional_hazard_test
 from statsmodels.stats.multitest import multipletests
 
-CHECK_VARIABLES = ["category", "source", "has_photo", "night_filing"]
-
 
 def _design(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, list[str]]]:
     d = pd.DataFrame({"T": df["duration_hours"].clip(lower=1e-3).to_numpy(),

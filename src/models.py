@@ -28,9 +28,6 @@ def _step_eval(x: np.ndarray, y: np.ndarray, t: np.ndarray, left: float) -> np.n
 class BaseModel:
     name = "base"
 
-    def median_hours(self, df: pd.DataFrame) -> np.ndarray:
-        return _median_from_curves(self.survival(df, MEDIAN_GRID), MEDIAN_GRID)
-
     def risk(self, df: pd.DataFrame) -> np.ndarray:
         return 1.0 - self.survival(df, np.array([RISK_HORIZON_H]))[:, 0]
 
@@ -174,7 +171,7 @@ class FistaModel(BaseModel):
             solver.alpha = a
             solver.fit(X, t, e, strata=strata, beta0=beta, prepared=prepared)
             beta = solver.coef_.copy()
-            self.path_[float(a)] = (beta, solver.baseline_, solver.info_.n_iter)
+            self.path_[float(a)] = (beta, solver.baseline_, solver.n_iter_)
         self.solver_ = solver
         if self.alpha is None or float(self.alpha) not in self.path_:
             self.alpha = float(self.alphas_[len(self.alphas_) // 2])

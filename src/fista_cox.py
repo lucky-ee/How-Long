@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import scipy.sparse as sp
@@ -70,13 +70,6 @@ def prox_group(v: np.ndarray, thresh: float, groups: list[np.ndarray]) -> np.nda
         out[g] = 0.0 if norm <= t else (1.0 - t / norm) * v[g]
     return out
 
-@dataclass
-class FitInfo:
-    n_iter: int
-    converged: bool
-    objective: list[float] = field(default_factory=list)
-    step_size: list[float] = field(default_factory=list)
-
 
 class FistaCox:
 
@@ -135,15 +128,12 @@ class FistaCox:
         x = np.zeros(p) if beta0 is None else beta0.astype(float).copy()
         y, theta, step = x.copy(), 1.0, step0
         f_x = self._smooth_value(x, X, st, n) + self._penalty(x)
-        info = FitInfo(0, False)
 
         for k in range(1, self.max_iter + 1):
             x_new, f_new, step = self._prox_step(y, X, XT, st, n, step)
             if f_new > f_x:
                 theta = 1.0
                 x_new, f_new, step = self._prox_step(x, X, XT, st, n, step)
-            info.objective.append(f_new)
-            info.step_size.append(step)
 
             theta_new = (1 + np.sqrt(1 + 4 * theta**2)) / 2
             y = x_new + ((theta - 1) / theta_new) * (x_new - x)
@@ -151,22 +141,10 @@ class FistaCox:
             x, f_x, theta = x_new, min(f_new, f_x), theta_new
             step *= 1.2                                      # let the step grow back
             if change < self.tol:
-                info.converged = True
                 break
-        info.n_iter = k
-        self.coef_, self.info_ = x, info
+        self.coef_, self.n_iter_ = x, k
         self._fit_baseline(X, time, event, strata)
         return self
-
-    def fit_path(self, X, time, event, alphas, strata=None):
-        """Fit a sequence of models with decreasing `alphas`, warm-starting each from the previous."""
-        betas, beta = [], None
-        for a in sorted(alphas, reverse=True):
-            self.alpha = a
-            self.fit(X, time, event, strata=strata, beta0=beta)
-            beta = self.coef_
-            betas.append((a, beta.copy()))
-        return betas
 
     def _fit_baseline(self, X, time, event, strata):
         """Compute the baseline cumulative hazard for each stratum, after fitting."""

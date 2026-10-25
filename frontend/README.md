@@ -53,7 +53,7 @@ The API (`src/api.py`) serves, relative to `apiBase`:
 `supervisor_district` and `backlog_at_filing` are `null` when the user picks "Not sure".
 The backlog comes from `options.backlog["<request_type>|<district>"]` (a missing key means 0).
 
-Response: `model.survival(df, MEDIAN_GRID)` for that row, plus `model.median_hours(df)`:
+Response: `model.survival(df, MEDIAN_GRID)` for that row, plus the median read off that curve:
 
 ```json
 { "median_hours": 33.1, "hours": [0.05, "...", 17520], "survival": [1.0, "...", 0.0] }
