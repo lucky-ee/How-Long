@@ -95,7 +95,7 @@ def run(since: date, force: bool = False) -> None:
 
 def main() -> None:
     default_since = date(date.today().year - 3, date.today().month, 1)
-    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p = argparse.ArgumentParser(description="Fetch monthly case data from the SODA API.")
     p.add_argument("--since", type=date.fromisoformat, default=default_since)
     p.add_argument("--force", action="store_true")
     args = p.parse_args()
