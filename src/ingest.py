@@ -15,12 +15,16 @@ from urllib3.util.retry import Retry
 from src import config
 
 
+def _next_month(d: date) -> date:
+    return date(d.year + (d.month == 12), d.month % 12 + 1, 1)
+
+
 def month_starts(since: date, until: date) -> list[date]:
     """First day of every month from `since`'s month through `until`'s month."""
     months, cur = [], date(since.year, since.month, 1)
     while cur <= until:
         months.append(cur)
-        cur = date(cur.year + (cur.month == 12), cur.month % 12 + 1, 1)
+        cur = _next_month(cur)
     return months
 
 
@@ -36,7 +40,7 @@ def _session() -> requests.Session:
 
 def fetch_month(session: requests.Session, start: date) -> pd.DataFrame:
     """All cases whose requested_datetime falls in the month beginning at `start`."""
-    end = date(start.year + (start.month == 12), start.month % 12 + 1, 1)
+    end = _next_month(start)
     url = f"{config.SODA_BASE}/resource/{config.DATASET_ID}.json"
     where = (
         f"requested_datetime >= '{start.isoformat()}T00:00:00' "

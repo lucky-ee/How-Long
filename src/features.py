@@ -14,6 +14,10 @@ INPUT_COLUMNS = ["opened", "category", "request_type", "request_details", "sourc
                  "supervisor_district", "has_photo", "backlog_at_filing"]
 
 
+def district_label(d) -> str:
+    return "unknown" if pd.isna(d) else str(int(d))
+
+
 def derive(df: pd.DataFrame) -> pd.DataFrame:
     """Raw columns -> model inputs. Pure function of each row, so it is safe at predict time."""
     out = pd.DataFrame(index=df.index)
@@ -29,7 +33,7 @@ def derive(df: pd.DataFrame) -> pd.DataFrame:
     for col in ["category", "request_type", "request_details", "source"]:
         out[col] = df[col].astype("object").where(df[col].notna(), "unknown").astype(str)
     district = pd.to_numeric(df["supervisor_district"], errors="coerce")
-    out["supervisor_district"] = district.map(lambda d: "unknown" if pd.isna(d) else str(int(d)))
+    out["supervisor_district"] = district.map(district_label)
 
     out["has_photo"] = df["has_photo"].astype(float)
     backlog = pd.to_numeric(df.get("backlog_at_filing", pd.Series(np.nan, index=df.index)), errors="coerce")
@@ -57,20 +61,18 @@ def feature_names(pre: Pipeline) -> np.ndarray:
     return pre.named_steps["columns"].get_feature_names_out()
 
 
-def feature_groups(pre: Pipeline) -> list[np.ndarray]:
-    names = feature_names(pre)
+def _groups(pre: Pipeline) -> dict[str, np.ndarray]:
     groups: dict[str, list[int]] = {}
-    for i, name in enumerate(names):
+    for i, name in enumerate(feature_names(pre)):
         kind, rest = name.split("__", 1)
         key = next(c for c in CATEGORICAL if rest.startswith(c + "_")) if kind == "cat" else rest
         groups.setdefault(key, []).append(i)
-    return [np.array(v) for v in groups.values()]
+    return {k: np.array(v) for k, v in groups.items()}
+
+
+def feature_groups(pre: Pipeline) -> list[np.ndarray]:
+    return list(_groups(pre).values())
 
 
 def group_labels(pre: Pipeline) -> list[str]:
-    names = feature_names(pre)
-    labels = []
-    for idx in feature_groups(pre):
-        kind, rest = names[idx[0]].split("__", 1)
-        labels.append(next(c for c in CATEGORICAL if rest.startswith(c + "_")) if kind == "cat" else rest)
-    return labels
+    return list(_groups(pre))

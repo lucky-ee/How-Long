@@ -6,6 +6,8 @@ from scipy import stats
 from sksurv.metrics import concordance_index_censored
 from statsmodels.stats.multitest import multipletests
 
+from src.features import district_label
+
 ALPHA = 0.05
 
 
@@ -81,7 +83,7 @@ def corrected_resampled_ttest(diffs: list[float], n_train: float, n_test: float)
 
 def run_confirmatory(holdout: pd.DataFrame, deployed_risk: np.ndarray, baseline_risk: np.ndarray) -> dict:
     h = holdout.copy()
-    h["supervisor_district"] = h["supervisor_district"].map(lambda d: "unknown" if pd.isna(d) else str(int(d)))
+    h["supervisor_district"] = h["supervisor_district"].map(district_label)
     h["has_photo"] = h["has_photo"].map({True: "photo", False: "no photo"})
     two_sources = h[h["source"].isin(["mobile", "phone"])]
 

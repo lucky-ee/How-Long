@@ -100,10 +100,6 @@ class CoxnetModel(BaseModel):
     def survival(self, df, times):
         X = self.pre_.transform(df)
         s = self.est_.predict_survival_function(X, alpha=self.alpha, return_array=True)
-        return np.stack([_step_eval(self.est_.unique_times_, row, np.asarray(times, float), 1.0) for row in s]) \
-            if len(s) < 50 else self._vector_step(s, times)
-
-    def _vector_step(self, s, times):
         i = np.searchsorted(self.est_.unique_times_, np.asarray(times, float), side="right") - 1
         out = s[:, np.clip(i, 0, s.shape[1] - 1)]
         out[:, i < 0] = 1.0
@@ -143,8 +139,8 @@ class FistaModel(BaseModel):
     def _strata(self, df):
         return None if self.strata_col is None else df[self.strata_col].astype(str).to_numpy()
 
-    def _alpha_max(self, X, t, e, strata) -> float:
-        _, g_eta = neg_loglik_and_grad_eta(np.zeros(X.shape[0]), _prepare(t, e, strata))
+    def _alpha_max(self, X, prepared) -> float:
+        _, g_eta = neg_loglik_and_grad_eta(np.zeros(X.shape[0]), prepared)
         grad = np.abs(np.asarray(X.T @ g_eta).ravel()) / X.shape[0]
         if self.penalty == "group":
             return max(np.linalg.norm(grad[g]) / np.sqrt(len(g)) for g in self.groups_) / self.l1_ratio
@@ -158,13 +154,13 @@ class FistaModel(BaseModel):
         t = train["duration_hours"].to_numpy(float)
         e = train["event"].to_numpy(bool)
         strata = self._strata(train)
+        prepared = _prepare(t, e, strata)
         if alphas is None:
-            amax = self._alpha_max(X, t, e, strata)
+            amax = self._alpha_max(X, prepared)
             alphas = np.geomspace(amax, amax * self.alpha_min_ratio, self.n_alphas)
         self.alphas_ = np.sort(np.asarray(alphas, float))[::-1]
 
         solver = FistaCox(l1_ratio=self.l1_ratio, penalty=self.penalty, groups=self.groups_, tol=1e-6)
-        prepared = _prepare(t, e, strata)
         self.path_ = {}
         beta = None
         for a in self.alphas_:
